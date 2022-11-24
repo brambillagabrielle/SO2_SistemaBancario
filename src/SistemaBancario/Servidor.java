@@ -6,14 +6,16 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 
 public class Servidor extends Thread {
     
     private final Usuario usuario;
-    private Socket socket;
+    private static Socket socket;
     private static List<Usuario> usuarios;
     private static TipoUsuario tipoUsuario;
 
@@ -23,7 +25,8 @@ public class Servidor extends Thread {
     
     public static void main(String args[]) {
         
-        System.out.println("* Servidor Sistema Bancário *");
+        System.out.println("SERVIDOR SISTEMA BANCÁRIO");
+        System.out.println("Uptime: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
         
         usuarios = new ArrayList<>();
         
@@ -78,19 +81,26 @@ public class Servidor extends Thread {
             tipoUsuario = TipoUsuario.valueOf(tipo);
             usuario.setTipoUsuario(tipoUsuario);
             
-            System.out.println("Um " + usuario.getTipoUsuario() + " se conectou!");
+            System.out.println("\nUm " + usuario.getTipoUsuario() + " se conectou!");
+            System.out.println("Total de sockets: " + usuarios.size() + "\n");
             
             String requisicao = entrada.readLine();
+            String resposta;
             while(requisicao != null && !(requisicao.trim().equals(""))) {
                 
-                saida.println(requisicao);
+                if(requisicao.equals("q")) {
+                    
+                    saida.println("desconectado");
+                    usuarios.remove(usuario);
+                    break;
+                    
+                }
+                    
+                resposta = requisicao;
+                saida.println(resposta);
                 saida.println("> ");
-                requisicao = entrada.readLine();
                 
             }
-            
-            usuarios.remove(saida);
-            socket.close();
             
         } catch(IOException e) {
             
@@ -102,6 +112,9 @@ public class Servidor extends Thread {
             );
             
         }
+            
+        System.out.println("\nUsuário " + usuario.getIp() + " se desconectou!");
+        System.out.println("Total de sockets: " + usuarios.size() + "\n");
         
     }
     

@@ -13,6 +13,7 @@ public class Usuario extends Thread {
     private Socket socket;
     private PrintStream saida;
     private TipoUsuario tipoUsuario;
+    private static boolean sair;
     
     public Usuario() {
         
@@ -44,7 +45,7 @@ public class Usuario extends Thread {
             thread.start();
 
             String requisicao;
-            while(true) {
+            while(!sair) {
 
                 requisicao = teclado.readLine();
                 saida.println(requisicao);
@@ -74,11 +75,17 @@ public class Usuario extends Thread {
                             socket.getInputStream())
             );
             
-            String requisicao;
+            String resposta;
             while(true) {
                 
-                requisicao = entrada.readLine();
-                System.out.println(requisicao);
+                resposta = entrada.readLine();
+                
+                if (resposta.equals("desconectado")) {
+                    sair = true;
+                    System.out.println("\nConexão encerrada");
+                    System.out.println("\nAperte ENTER para SAIR");
+                    break;
+                }
                 
             }
             
