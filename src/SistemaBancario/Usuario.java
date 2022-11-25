@@ -12,8 +12,7 @@ public class Usuario extends Thread {
     private String ip;
     private Socket socket;
     private PrintStream saida;
-    private TipoUsuario tipoUsuario;
-    private static boolean sair;
+    private static boolean sair = false;
     
     public Usuario() {
         
@@ -35,8 +34,30 @@ public class Usuario extends Thread {
             BufferedReader teclado = new BufferedReader(
                     new InputStreamReader(System.in)
             );
+                
+            System.out.print("Logar como CLIENTE ou ADMINISTRADOR? ");
+            String tipo = teclado.readLine();
+            saida.println(tipo);
+            
+            if (tipo.equals("CLIENTE")) {
+            
+                System.out.print("Digite seu nome: ");
+                String nome  = teclado.readLine();
+                saida.println(nome);
+                
+                System.out.print("Digite seu CPF: ");
+                String cpf  = teclado.readLine();
+                saida.println(cpf);
+                
+                System.out.print("Número da sua agência: ");
+                String agencia = teclado.readLine();
+                saida.println(agencia);
 
-            saida.println(TipoUsuario.CLIENTE.toString());
+                System.out.print("Número da sua conta: ");
+                String conta = teclado.readLine();
+                saida.println(conta);
+                
+            }
             
             System.out.println("Entre com as requisições: ");
             System.out.println("> ");
@@ -45,7 +66,10 @@ public class Usuario extends Thread {
             thread.start();
 
             String requisicao;
-            while(!sair) {
+            while(true) {
+                
+                if (sair)
+                    break;
 
                 requisicao = teclado.readLine();
                 saida.println(requisicao);
@@ -80,12 +104,16 @@ public class Usuario extends Thread {
                 
                 resposta = entrada.readLine();
                 
-                if (resposta.equals("desconectado")) {
+                if (resposta == null || resposta.equals("desconectado")) {
+                    
                     sair = true;
                     System.out.println("\nConexão encerrada");
                     System.out.println("\nAperte ENTER para SAIR");
                     break;
+                    
                 }
+                
+                System.out.println(resposta);
                 
             }
             
@@ -124,14 +152,6 @@ public class Usuario extends Thread {
 
     public void setSaida(PrintStream saida) {
         this.saida = saida;
-    }
-
-    public TipoUsuario getTipoUsuario() {
-        return tipoUsuario;
-    }
-
-    public void setTipoUsuario(TipoUsuario tipoUsuario) {
-        this.tipoUsuario = tipoUsuario;
     }
     
 }
