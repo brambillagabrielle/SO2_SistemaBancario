@@ -7,21 +7,18 @@ public class Conta {
     
     private Agencia agencia;
     private String numero;
-    private String nomeCliente;
-    private String cpf;
-    private List<String> correntistas;
+    private Cliente cliente;
+    private List<Cliente> correntistas;
     private Double saldo;
 
-    public Conta(Agencia agencia, String numero, String nomeCliente, String cpf) {
+    public Conta(Agencia agencia, String numero, Cliente cliente) {
         
         this.agencia = agencia;
         this.numero = numero;
-        
-        this.nomeCliente = nomeCliente;
-        this.cpf = cpf;
+        this.cliente = cliente;
         
         correntistas = new ArrayList<>(3);
-        correntistas.add(cpf);
+        correntistas.add(cliente);
         
         saldo = 0.0;
         
@@ -43,45 +40,28 @@ public class Conta {
         this.numero = numero;
     }
 
-    public String getNomeCliente() {
-        return nomeCliente;
-    }
-
-    public void setNomeCliente(String nomeCliente) {
-        this.nomeCliente = nomeCliente;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
-
-    public List<String> getCorrentistas() {
+    public List<Cliente> getCorrentistas() {
         return correntistas;
     }
 
-    public void setCorrentistas(List<String> correntistas) {
+    public void setCorrentistas(List<Cliente> correntistas) {
         this.correntistas = correntistas;
     }
     
-    public void adicionaCorrentista(String cpf) {
-        correntistas.add(cpf);
+    public void adicionaCorrentista(Cliente cliente) {
+        correntistas.add(cliente);
     }
     
-    public void removeCorrentista(String cpf) {
-        correntistas.remove(cpf);
+    public void removeCorrentista(Cliente cliente) {
+        correntistas.remove(cliente);
     }
     
-    public String retornaCorrentista(String cpf) {
+    public Cliente retornaCorrentista(String cpf) {
         
-        for(String c : correntistas) {
+        for(Cliente c : correntistas) {
             
-            if (c.equals(cpf)) {
+            if (c.getCpf().equals(cpf))
                 return c;
-            }
             
         }
         
