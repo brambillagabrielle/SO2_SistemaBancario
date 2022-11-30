@@ -40,6 +40,14 @@ public class Conta {
         this.numero = numero;
     }
 
+    public Cliente getCliente() {
+        return cliente;
+    }
+    
+    public void setCliente(Cliente cliente) {
+        this.cliente = cliente;
+    }
+
     public List<Cliente> getCorrentistas() {
         return correntistas;
     }
