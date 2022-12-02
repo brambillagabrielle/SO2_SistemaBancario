@@ -7,6 +7,13 @@ import java.io.PrintStream;
 import java.net.Socket;
 import javax.swing.JOptionPane;
 
+/**
+ * Classe Usuario que requisita operações para o Servidor, podendo ser do tipo Cliente
+ * ou Administrador. O Cliente pode requisitar para que o saldo de uma conta seja alterado e
+ * o Administrador pode criar, alterar, ler ou deletar Agências e Contas. A classe pode requisitar
+ * essas ações através de uma implementação de Sockets em Java, se conectado ao endereço do Servidor
+ * @author Gabrielle Brambilla
+ */
 public class Usuario extends Thread {
     
     private String ip;
@@ -14,14 +21,28 @@ public class Usuario extends Thread {
     private PrintStream saida;
     private static boolean sair = false;
     
+    /**
+     * Método Construtor da classe Usuário
+     */
     public Usuario() {
         
     }
-
+    
+    /**
+     * Método Construtor da classe Usuário que atribui um valor para Socket
+     * @param socket Socket
+     */
     public Usuario(Socket socket) {
         this.socket = socket;
     }
     
+    /**
+     * Método principal que inicia o Usuário. Implementa um Socket para se comunicar
+     * com o Servidor através de ip:porta. Inicia pedindo o tipo do Usuário (Cliente
+     * ou Administrador) para chamar a função que contenha o fluxo de mensagens para
+     * enviar ao Servidor correspondente a cada tipo
+     * @param args
+     */
     public static void main(String args[]) {
         
         try {
@@ -72,6 +93,8 @@ public class Usuario extends Thread {
                         "Erro",
                         JOptionPane.ERROR_MESSAGE
                 );
+                saida.println("SAIR");
+                sair = true;
                 
             }
             
@@ -88,6 +111,14 @@ public class Usuario extends Thread {
         
     }
     
+    /**
+     * Método que forma e envia o fluxo de mensagens de um Usuário do tipo Cliente para
+     * o Servidor. Inicia pedindo qual o CPF do Cliente e qual a Conta que ele deseja realizar as
+     * operações. Após isso, o usuário pode requisitar quantas operações quiser em cima de saldo
+     * da conta informada até que clique em sair
+     * @param saida PrintStream - objeto para enviar mensagem para o Servidor
+     * @exception IOException
+     */
     private static void requisitarServicos_Cliente(PrintStream saida) throws IOException {
         
         String cpf = JOptionPane.showInputDialog(
@@ -185,6 +216,8 @@ public class Usuario extends Thread {
                         "Erro",
                         JOptionPane.ERROR_MESSAGE
                 );
+                saida.println("SAIR");
+                sair = true;
 
             }
             
@@ -196,11 +229,20 @@ public class Usuario extends Thread {
                     "Erro",
                     JOptionPane.ERROR_MESSAGE
             );
+            saida.println("SAIR");
+            sair = true;
             
         }
         
     }
     
+    /**
+     * Método que forma e envia o fluxo de mensagens de um Usuário do tipo Administrador para
+     * o Servidor. Pode requisitar quantas operações quiser (até que seja interrompido ao clicar em 
+     * sair) em relação a criação, leitura, alteração e remoção de Agências e Contas
+     * @param saida PrintStream - objeto para enviar mensagem para o Servidor
+     * @exception IOException
+     */
     private static void requisitarServicos_Administrador(PrintStream saida) throws IOException {
         
         while(true) {
@@ -216,8 +258,7 @@ public class Usuario extends Thread {
                     null,
                     new String[] {
                         "CONTA",
-                        "AGENCIA",
-                        "CORRENTISTA"
+                        "AGENCIA"
                     },
                     "CONTA"
             );
@@ -454,6 +495,12 @@ public class Usuario extends Thread {
         
     }
     
+    /**
+     * Método run que executa como thread, destinado à comunicação com o Servidor em que
+     * estiver conectado, recebendo e mostrando as mensagens recebidas do Servidor para
+     * as requisições enviadas, tanto de sucesso quanto de erros. REcebe e mostra até que seja
+     * recebido a mensagem de desconectado pelo Servidor
+     */
     @Override
     public void run() {
         
@@ -475,7 +522,7 @@ public class Usuario extends Thread {
                     JOptionPane.showMessageDialog(
                             null, 
                             "Conexão encerrada!", 
-                            "Sucesso", 
+                            "Desconectado", 
                             JOptionPane.INFORMATION_MESSAGE
                     );
                     break;
@@ -491,7 +538,7 @@ public class Usuario extends Thread {
                         JOptionPane.showMessageDialog(
                                 null, 
                                 resposta, 
-                                "Sucesso", 
+                                "Mensagem", 
                                 JOptionPane.INFORMATION_MESSAGE
                         );
 
@@ -522,27 +569,51 @@ public class Usuario extends Thread {
         }
         
     }
-
+    
+    /**
+     * Método para retornar ip
+     * @return ip String
+     */
     public String getIp() {
         return ip;
     }
-
+    
+    /**
+     * Método para atribuir valor para ip
+     * @param ip String
+     */
     public void setIp(String ip) {
         this.ip = ip;
     }
-
+    
+    /**
+     * Método para retornar socket
+     * @return socket Socket
+     */
     public Socket getSocket() {
         return socket;
     }
-
+    
+    /**
+     * Método para atribuir valor para socket
+     * @param socket Socket
+     */
     public void setSocket(Socket socket) {
         this.socket = socket;
     }
 
+    /**
+     * Método para retornar saida
+     * @return saida PrintStream
+     */
     public PrintStream getSaida() {
         return saida;
     }
 
+    /**
+     * Método para atribuir valor para saida
+     * @param saida PrintStream
+     */
     public void setSaida(PrintStream saida) {
         this.saida = saida;
     }

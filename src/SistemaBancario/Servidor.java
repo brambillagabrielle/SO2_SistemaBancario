@@ -13,6 +13,12 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.JOptionPane;
 
+/**
+ * Classe Servidor que recebe e executa a requisição de um Usuário (Cliente ou Administrador).
+ * Para isso, precisa realizar a conexão para se comunicar com o(s) outro(s) processo(s), usando,
+ * para isso, uma implementação de Sockets em Java
+ * @author Gabrielle Brambilla
+ */
 public class Servidor extends Thread {
     
     private final Usuario usuario;
@@ -23,6 +29,13 @@ public class Servidor extends Thread {
         this.usuario = usuario;
     }
     
+    /**
+     * Método principal que inicia o Servidor. Implementa um ServerSocket para atribuir
+     * uma porta para receber as conexões dos Usuários por Socket e, até que sua execução seja 
+     * interrompida, recebe requisições de conexões com Usuários, aceita, atribui um ip:porta para 
+     * a comunicação e inicia uma thread para receber as mensagens
+     * @param args
+     */
     public static void main(String args[]) {
         
         System.out.println("SERVIDOR SISTEMA BANCÁRIO");
@@ -36,11 +49,10 @@ public class Servidor extends Thread {
                 
                 Socket socket = serverSocket.accept();
                 
-                Usuario usuario = new Usuario();
+                Usuario usuario = new Usuario(socket);
                 usuario.setIp(
                         socket.getRemoteSocketAddress().toString()
                 );
-                usuario.setSocket(socket);
                 usuarios.add(usuario);
                                                 
                 Thread thread = new Servidor(usuario);
@@ -61,6 +73,12 @@ public class Servidor extends Thread {
         
     }
     
+    /**
+     * Método run que executa como thread, destinado à comunicação com o Usuário que
+     * estiver conectado. Recebe inicialmente o tipo do Usuário que se conectou, podendo
+     * ser do tipo Cliente ou Administrador, e a partir disso reconhece as mensagens
+     * através da comunicação padrão estabelecida, realizando as operações requisitadas
+     */
     @Override
     public void run() {
         
@@ -93,7 +111,7 @@ public class Servidor extends Thread {
 
                 String[] mensagem;
                 switch(tipo) {
-
+                    
                     case "CLIENTE":
 
                         mensagem = requisicao.split("\\|");
@@ -108,7 +126,7 @@ public class Servidor extends Thread {
                                 String cpf = String.valueOf(mensagem[1]);
                                 
                                 if (!c.verificaCorrentista(cpf))
-                                    c.getCorrentistas().add(cpf);
+                                    c.adicionaCorrentista(cpf);
                             
                                 String operacao = String.valueOf(mensagem[2]);
 
@@ -144,7 +162,7 @@ public class Servidor extends Thread {
                                 }
                                 
                             } else
-                                saida.println("MENSAGEM_ERRO|Limite de correntistas (3) atingido!");
+                                saida.println("MENSAGEM_ERRO|Limite de 3 correntistas por conta atingido!");
                             
                         } else
                             saida.println("MENSAGEM_ERRO|Conta não existe!");
@@ -213,14 +231,14 @@ public class Servidor extends Thread {
                                             case "NUMERO":
 
                                                 a.setNumero(valorAtributo);
-                                                saida.println("MENSAGEM|Agência alterada!");
                                                 break;
 
                                             case "DESCRICAO":
 
                                                 a.setDescricao(valorAtributo);
-                                                saida.println("MENSAGEM|Agência alterada!");
-
+                                                
+                                            saida.println("MENSAGEM|Agência alterada!");    
+                                            
                                         }
 
                                     } else
@@ -309,9 +327,6 @@ public class Servidor extends Thread {
 
                                             case "AGENCIA":
                                                 
-                                                atributo = String.valueOf(mensagem[3]);
-                                                valorAtributo = String.valueOf(mensagem[4]);
-                                                
                                                 Agencia novaAgencia = retornaAgencia(valorAtributo);
 
                                                 if (novaAgencia != null) {
@@ -323,6 +338,11 @@ public class Servidor extends Thread {
                                                     saida.println("MENSAGEM_ERRO|Agência não existe!");
 
                                                 break;
+                                                
+                                            case "NUMERO":
+
+                                                c.setNumero(valorAtributo);
+                                                saida.println("MENSAGEM|Conta alterada!");
 
                                         }
 
@@ -375,6 +395,12 @@ public class Servidor extends Thread {
         
     }
     
+    /**
+     * Método para retornar um objeto de Agencia a partir de um número passado por
+     * parâmetro. Caso não encontre uma Agencia com esse mesmo número, retorna null
+     * @param numeroAgencia String
+     * @return Agencia
+     */
     private Agencia retornaAgencia(String numeroAgencia) {
         
         for(Agencia a : agencias) {
@@ -388,6 +414,13 @@ public class Servidor extends Thread {
                 
     }
     
+    /**
+     * Método para retornar um objeto de Conta, a partir da lista de qualquer Agencia,
+     * através do número passado por parâmetro. Caso não encontre uma Conta com esse
+     * mesmo número, retorna null
+     * @param numeroConta String
+     * @return Conta
+     */
     private Conta retornaConta(String numeroConta) {
         
         for(Agencia a : agencias) {
