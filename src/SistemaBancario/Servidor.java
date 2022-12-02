@@ -16,24 +16,17 @@ import javax.swing.JOptionPane;
 public class Servidor extends Thread {
     
     private final Usuario usuario;
-    private static Socket socket;
-    
-    private static List<Usuario> usuarios;
-    private static List<Agencia> agencias;
-    
-    private static TipoUsuario tipoUsuario;
+    private static List<Usuario> usuarios = new ArrayList<>();
+    private static List<Agencia> agencias = new ArrayList<>();
 
     public Servidor(Usuario usuario) {
         this.usuario = usuario;
-        agencias = new ArrayList<>();
     }
     
     public static void main(String args[]) {
         
         System.out.println("SERVIDOR SISTEMA BANCÁRIO");
         System.out.println("Uptime: " + new SimpleDateFormat("HH:mm:ss").format(new Date()));
-        
-        usuarios = new ArrayList<>();
         
         try {
             
@@ -82,241 +75,286 @@ public class Servidor extends Thread {
             );
             usuario.setSaida(saida);
             
-            // ********* TESTE *********
-            Cliente cliente = new Cliente("12345678910");
-            Agencia agencia = new Agencia("0226", "Teste");
-            Conta conta = new Conta(agencia, "1234", cliente);
-            agencia.adicionaConta(conta);
-            agencias.add(agencia);
-            
             String tipo = entrada.readLine();
-            tipoUsuario = TipoUsuario.valueOf(tipo);
-            
+                
             System.out.println();
-            System.out.println("Um " + tipoUsuario + " se conectou!");
+            System.out.println("Um " + tipo + " se conectou!");
             System.out.println("Total de sockets: " + usuarios.size());
             
-            String cpf = entrada.readLine();
-            Cliente clienteExiste = retornaCliente(cpf);
-            
-            if(tipoUsuario.equals(TipoUsuario.ADMINISTRADOR) || clienteExiste != null) {
-                
-                saida.println("CONECTADO");
-                
-                String requisicao = entrada.readLine();
-                while(requisicao != null && !(requisicao.trim().equals(""))) {
+            String requisicao = entrada.readLine();
+            while(requisicao != null && !(requisicao.trim().equals(""))) {
 
-                    if(requisicao.equals("SAIR")) {
+                if(requisicao.equals("SAIR")) {
 
-                        saida.println("DESCONECTADO");
+                    saida.println("DESCONECTADO");
+                    break;
+
+                }
+
+                String[] mensagem;
+                switch(tipo) {
+
+                    case "CLIENTE":
+
+                        mensagem = requisicao.split("\\|");
+                        String numeroConta = String.valueOf(mensagem[0]);
+
+                        Conta c = retornaConta(numeroConta);
+                        
+                        if (c != null) {
+                            
+                            if (c.getCorrentistas().size() < 3) {
+                                
+                                String cpf = String.valueOf(mensagem[1]);
+                                
+                                if (!c.verificaCorrentista(cpf))
+                                    c.getCorrentistas().add(cpf);
+                            
+                                String operacao = String.valueOf(mensagem[2]);
+
+                                try {
+
+                                    Double valor = Double.valueOf(mensagem[3]);
+
+                                    switch(operacao) {
+
+                                        case "VERIFICAR_SALDO":
+
+                                            saida.println("MENSAGEM|Saldo atual: " 
+                                                    + NumberFormat.getCurrencyInstance().format(c.verificarSaldo()));
+                                            break;
+
+                                        case "DEPOSITAR":
+
+                                            c.depositar(valor);
+                                            saida.println("MENSAGEM|Valor depositado!");
+                                            break;
+
+                                        case "SACAR":
+
+                                            if (c.sacar(valor))
+                                                saida.println("MENSAGEM|Valor sacado!");
+                                            else
+                                                saida.println("MENSAGEM_ERRO|Saldo insuficiente!");
+
+                                    }
+
+                                } catch (Exception e) {
+                                    saida.println("MENSAGEM_ERRO|Valor inserido inválido! " + e.getMessage());
+                                }
+                                
+                            } else
+                                saida.println("MENSAGEM_ERRO|Limite de correntistas (3) atingido!");
+                            
+                        } else
+                            saida.println("MENSAGEM_ERRO|Conta não existe!");
+
                         break;
 
-                    }
-                    
-                    String[] mensagem;
-                    switch(tipoUsuario) {
-                        
-                        case CLIENTE:
-                            
-                            mensagem = requisicao.split("\\|");
-                            OperacaoCliente operacao = OperacaoCliente.valueOf(mensagem[0]);
-                            Double valor = Double.valueOf(mensagem[1]);
-                            
-                            switch(operacao) {
-                                
-                                case VERIFICAR_SALDO:
-                                    
-                                    saida.println("MENSAGEM|Saldo atual: " 
-                                            + NumberFormat.getCurrencyInstance().format(conta.verificarSaldo()));
-                                    break;
-                                    
-                                case DEPOSITAR:
-                                    
-                                    conta.depositar(valor);
-                                    saida.println("MENSAGEM|Valor depositado!");
-                                    break;
-                                    
-                                case SACAR:
-                                    
-                                    if (conta.sacar(valor))
-                                        saida.println("MENSAGEM|Valor sacado!");
+                    case "ADMINISTRADOR":
+
+                        mensagem = requisicao.split("\\|");
+                        String objeto = String.valueOf(mensagem[0]);
+                        String operacaoAdmin = String.valueOf(mensagem[1]);
+
+                        String atributo, valorAtributo;                            
+                        if (objeto.equals("AGENCIA")) {
+
+                            String numeroAgencia;
+                            Agencia a;
+                            switch(operacaoAdmin) {
+
+                                case "LER":
+
+                                    numeroAgencia = String.valueOf(mensagem[2]);
+                                    a = retornaAgencia(numeroAgencia);
+
+                                    if (a != null)
+                                        saida.println(
+                                                "MENSAGEM|Número: " + a.getNumero()
+                                                + " / Descrição: " + a.getDescricao()
+                                        );
                                     else
-                                        saida.println("MENSAGEM_ERRO|Saldo insuficiente!");
-                                
-                            }
-                            
-                            break;
-                            
-                        case ADMINISTRADOR:
-                            
-                            mensagem = requisicao.split("\\|");
-                            String objeto = String.valueOf(mensagem[0]);
-                            OperacaoAdmin operacaoAdmin = OperacaoAdmin.valueOf(mensagem[1]);
-                            
-                            String atributo, valorAtributo;                            
-                            if (objeto.equals("AGENCIA")) {
-                                
-                                String numeroAgencia;
-                                Agencia a;
-                                switch(operacaoAdmin) {
-                                
-                                    case LER:
-                                        
-                                        numeroAgencia = String.valueOf(mensagem[2]);
-                                        a = retornaAgencia(numeroAgencia);
-                                        
-                                        if (a != null)
-                                            saida.println(
-                                                    "MENSAGEM|Número: " + a.getNumero()
-                                                    + " / Descrição: " + a.getDescricao()
-                                            );
-                                        else
-                                            saida.println("MENSAGEM_ERRO|Agência não existe!");
-                                        
-                                        break;
+                                        saida.println("MENSAGEM_ERRO|Agência não existe!");
 
-                                    case CRIAR:
-                                        
-                                        numeroAgencia = String.valueOf(mensagem[2]);
-                                        a = retornaAgencia(numeroAgencia);
-                                        
-                                        if (a == null) {
-                                            
-                                            String descricao = String.valueOf(mensagem[3]);
-                                            
-                                            Agencia novaAgencia = new Agencia(numeroAgencia, descricao);
-                                            agencias.add(novaAgencia);
-                                            
-                                            saida.println("MENSAGEM|Agência criada!");
-                                            
-                                        } else
-                                            saida.println("MENSAGEM_ERRO|Agência já existe!");
-                                        
-                                        break;
+                                    break;
 
-                                    case ALTERAR:
+                                case "CRIAR":
 
-                                        numeroAgencia = String.valueOf(mensagem[2]);
-                                        atributo = String.valueOf(mensagem[3]);
-                                        valorAtributo = String.valueOf(mensagem[4]);
-                                        
-                                        a = retornaAgencia(numeroAgencia);
-                                        agencias.remove(a);
-                                        
+                                    numeroAgencia = String.valueOf(mensagem[2]);
+                                    a = retornaAgencia(numeroAgencia);
+
+                                    if (a == null) {
+
+                                        String descricao = String.valueOf(mensagem[3]);
+
+                                        Agencia novaAgencia = new Agencia(numeroAgencia, descricao);
+                                        agencias.add(novaAgencia);
+
+                                        saida.println("MENSAGEM|Agência criada!");
+
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Agência já existe!");
+
+                                    break;
+
+                                case "ALTERAR":
+
+                                    numeroAgencia = String.valueOf(mensagem[2]);
+                                    atributo = String.valueOf(mensagem[3]);
+                                    valorAtributo = String.valueOf(mensagem[4]);
+
+                                    a = retornaAgencia(numeroAgencia);
+
+                                    if (a != null) {
+
                                         switch(atributo) {
-                                            
-                                            case "NUMERO":
-                                                
-                                                a.setNumero(valorAtributo);
-                                                break;
-                                                
-                                            case "DESCRICAO":
-                                                
-                                                a.setDescricao(valorAtributo);
-                                                
-                                        }
-                                        
-                                        agencias.add(a);
-                                        
-                                        saida.println("MENSAGEM|Agência alterada!");
-                                        break;
 
-                                    case DELETAR:
-                                        
-                                        numeroAgencia = String.valueOf(mensagem[2]);
+                                            case "NUMERO":
+
+                                                a.setNumero(valorAtributo);
+                                                saida.println("MENSAGEM|Agência alterada!");
+                                                break;
+
+                                            case "DESCRICAO":
+
+                                                a.setDescricao(valorAtributo);
+                                                saida.println("MENSAGEM|Agência alterada!");
+
+                                        }
+
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Agência não existe!");
+
+                                    break;
+
+                                case "DELETAR":
+
+                                    numeroAgencia = String.valueOf(mensagem[2]);
+
+                                    a = retornaAgencia(numeroAgencia);
+
+                                    if (a != null) {
+
                                         agencias.remove(retornaAgencia(numeroAgencia));
                                         saida.println("MENSAGEM|Agência e contas associadas foram deletadas!");
 
-                                }
-                                
-                            } else {
-                                
-                                String numeroConta;
-                                Conta c;
-                                switch(operacaoAdmin) {
-                                
-                                    case LER:
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Agência não existe!");
 
-                                        numeroConta = String.valueOf(mensagem[2]);
+                            }
+
+                        } else {
+
+                            switch(operacaoAdmin) {
+
+                                case "LER":
+
+                                    numeroConta = String.valueOf(mensagem[2]);
+                                    c = retornaConta(numeroConta);
+
+                                    if (c != null)
+                                        saida.println(
+                                            "MENSAGEM|Agência " + c.getAgencia().getNumero()
+                                            + " / Número: " + c.getNumero()
+                                            + " / Cliente: " + c.getCliente().getCpf()
+                                            + " / Correntistas: " + c.listaCorrentistas()
+                                        );
+                                    else
+                                        saida.println("MENSAGEM_ERRO|Conta não existe!");
+
+                                    break;
+
+                                case "CRIAR":
+
+                                    String numeroAgencia = String.valueOf(mensagem[2]);
+                                    Agencia a = retornaAgencia(numeroAgencia);
+
+                                    if (a != null) {
+
+                                        numeroConta = String.valueOf(mensagem[3]);
                                         c = retornaConta(numeroConta);
-                                        
-                                        if (c != null)
-                                            saida.println(
-                                                "MENSAGEM|Agência " + c.getAgencia().getNumero()
-                                                + " / Número: " + c.getNumero()
-                                                + " / Cliente: " + c.getCliente().getCpf()
-                                            );
-                                        else
-                                            saida.println(
-                                                    "MENSAGEM_ERRO|Conta não existe!");
-                                        
-                                        break;
 
-                                    case CRIAR:
-                                        
-                                        String numeroAgencia = String.valueOf(mensagem[2]);
-                                        Agencia a = retornaAgencia(numeroAgencia);
-                                        
-                                        if (a != null) {
-                                            
-                                            numeroConta = String.valueOf(mensagem[3]);
-                                            c = retornaConta(numeroConta);
-                                            
-                                            if (c == null) {
-                                                
-                                                cpf = String.valueOf(mensagem[4]);
-                                                
-                                                agencias.remove(a);
-                                                
-                                                Cliente cl = new Cliente(cpf);
-                                                Conta novaConta = new Conta(a, numeroConta, cl);
-                                                a.adicionaConta(novaConta);
-                                                
-                                                agencias.add(a);
-                                                
-                                                saida.println("MENSAGEM|Conta criada!");
-                                                
-                                            } else
-                                                saida.println("MENSAGEM_ERRO|Conta já existe!");
-                                            
+                                        if (c == null) {
+
+                                            String cpf = String.valueOf(mensagem[4]);
+                                            String nome = String.valueOf(mensagem[5]);
+
+                                            Cliente cl = new Cliente(nome, cpf);
+                                            Conta novaConta = new Conta(a, numeroConta, cl);
+
+                                            a.adicionaConta(novaConta);
+
+                                            saida.println("MENSAGEM|Conta criada!");
+
                                         } else
-                                            saida.println("MENSAGEM_ERRO|Agência não existe!");
-                                        
-                                        break;
+                                            saida.println("MENSAGEM_ERRO|Conta já existe!");
 
-                                    case ALTERAR:
-                                        
-                                        numeroConta = String.valueOf(mensagem[2]);
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Agência não existe!");
+
+                                    break;
+
+                                case "ALTERAR":
+
+                                    numeroConta = String.valueOf(mensagem[2]);
+
+                                    c = retornaConta(numeroConta);
+                                    if (c != null) {
+
                                         atributo = String.valueOf(mensagem[3]);
                                         valorAtributo = String.valueOf(mensagem[4]);
-                                        
-                                        // para implementar
-                                        
-                                        break;
 
-                                    case DELETAR:
-                                        
-                                        numeroConta = String.valueOf(mensagem[2]);
-                                        
-                                        // para implementar
-                                        
-                                        saida.println("");
-                                        
-                                     
-                                    // PRECISA IMPLEMENTAR A PARTE DOS CORRENTISTAS E MELHORAR A PARTE DOS CLIENTES
+                                        switch(atributo) {
 
-                                }
-                                
+                                            case "AGENCIA":
+                                                
+                                                atributo = String.valueOf(mensagem[3]);
+                                                valorAtributo = String.valueOf(mensagem[4]);
+                                                
+                                                Agencia novaAgencia = retornaAgencia(valorAtributo);
+
+                                                if (novaAgencia != null) {
+
+                                                    c.setAgencia(novaAgencia);
+                                                    saida.println("MENSAGEM|Conta alterada!");
+
+                                                } else
+                                                    saida.println("MENSAGEM_ERRO|Agência não existe!");
+
+                                                break;
+
+                                        }
+
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Conta não existe!");
+
+                                    break;
+
+                                case "DELETAR":
+
+                                    numeroConta = String.valueOf(mensagem[2]);
+
+                                    c = retornaConta(numeroConta);
+
+                                    if (c != null) {
+
+                                        a = c.getAgencia();
+                                        a.removeConta(c);
+                                        saida.println("MENSAGEM|Conta foi deletada!");
+
+                                    } else
+                                        saida.println("MENSAGEM_ERRO|Conta não existe!");
+
                             }
-                        
-                    }
-                    
-                    requisicao = entrada.readLine();
+
+                        }
 
                 }
-                
-            } else
-                saida.println("DESCONECTADO");
+
+                requisicao = entrada.readLine();
+
+            }
             
         } catch(IOException e) {
 
@@ -330,9 +368,10 @@ public class Servidor extends Thread {
         }
 
         usuarios.remove(usuario);
-            
-        System.out.println("\nUsuário " + usuario.getIp() + " se desconectou!");
-        System.out.println("Total de sockets: " + usuarios.size() + "\n");
+        
+        System.out.println();
+        System.out.println("Usuário " + usuario.getIp() + " se desconectou!");
+        System.out.println("Total de sockets: " + usuarios.size());
         
     }
     
@@ -357,26 +396,6 @@ public class Servidor extends Thread {
                 
                 if (c.getNumero().equals(numeroConta))
                     return c;
-                
-            }
-            
-        }
-        
-        return null;
-        
-    }
-    
-    private Cliente retornaCliente(String cpf) {
-        
-        Cliente cliente;
-        
-        for(Agencia a : agencias) {
-            
-            for(Conta c : a.getContas()) {
-                
-                cliente = c.retornaCorrentista(cpf);
-                if (c.retornaCorrentista(cpf) != null)
-                    return cliente;
                 
             }
             

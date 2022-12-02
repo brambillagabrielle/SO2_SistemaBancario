@@ -2,18 +2,28 @@ package SistemaBancario;
 
 public class Cliente {
     
-    private static String cpf;
+    private String nome;
+    private String cpf;
 
-    public Cliente(String cpf) {
+    public Cliente(String nome, String cpf) {
+        this.nome = nome;
         this.cpf = cpf;
     }
 
-    public static String getCpf() {
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    public String getCpf() {
         return cpf;
     }
 
-    public static void setCpf(String cpf) {
-        Cliente.cpf = cpf;
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
     
 }

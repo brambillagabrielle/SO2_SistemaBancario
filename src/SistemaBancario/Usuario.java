@@ -28,10 +28,6 @@ public class Usuario extends Thread {
         
             Socket socket = new Socket("127.0.0.1", 6666);
 
-            BufferedReader entrada = new BufferedReader(
-                    new InputStreamReader(
-                            socket.getInputStream())
-            );
             PrintStream saida = new PrintStream(
                     socket.getOutputStream()
             );
@@ -50,40 +46,29 @@ public class Usuario extends Thread {
             );
             saida.println(tipo);
             
-            String cpf;
-            if (tipo.equals("CLIENTE")) {
-                
-                cpf = JOptionPane.showInputDialog(
-                    "Digite seu CPF:"
-                );
-                
-            } else
-                cpf = "00000000000";
-            
-            saida.println(cpf);
-            String resposta = entrada.readLine();
-            
-            if (resposta.equals("CONECTADO") || tipo.equals("ADMINISTRADOR")) {
+            if (tipo != null) {
                 
                 Thread thread = new Usuario(socket);
                 thread.start();
-                
+
                 switch(tipo) {
-                
+
                     case "CLIENTE":
+
                         requisitarServicos_Cliente(saida);
                         break;
-                        
+
                     case "ADMINISTRADOR":
+
                         requisitarServicos_Administrador(saida);
-                        
+
                 }
                 
             } else {
                 
                 JOptionPane.showMessageDialog(
                         null,
-                        "CPF não registrado no sistema\nUsuário desconectado!",
+                        "Operação cancelada",
                         "Erro",
                         JOptionPane.ERROR_MESSAGE
                 );
@@ -104,37 +89,63 @@ public class Usuario extends Thread {
     }
     
     private static void requisitarServicos_Cliente(PrintStream saida) throws IOException {
-
-        while(true) {
-
-            if (sair)
-                break;
-
-            String operacao = (String) JOptionPane.showInputDialog(
-                    null,
-                    "Que operação deseja fazer?",
-                    "Operação",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    new String[] {
-                        "VERIFICAR_SALDO",
-                        "DEPOSITAR",
-                        "SACAR"
-                    },
-                    "VERIFICAR_SALDO"
+        
+        String cpf = JOptionPane.showInputDialog(
+                "Digite o seu CPF:"
+        );
+        
+        if (cpf != null) {
+        
+            String numeroConta = JOptionPane.showInputDialog(
+                    "Digite o número da conta:"
             );
+            
+            if (numeroConta != null) {
+            
+                while(true) {
 
-            if (operacao != null) {
+                    if (sair)
+                        break;
 
-                if(!(operacao.equals("VERIFICAR_SALDO"))) {
-
-                    String valor = JOptionPane.showInputDialog(
-                        "Digite o valor para " + operacao + ":"
+                    String operacao = (String) JOptionPane.showInputDialog(
+                            null,
+                            "Que operação deseja fazer?",
+                            "Operação",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            new String[] {
+                                "VERIFICAR_SALDO",
+                                "DEPOSITAR",
+                                "SACAR"
+                            },
+                            "VERIFICAR_SALDO"
                     );
 
-                    if (valor != null)
-                        saida.println(operacao + "|" + valor);
-                    else {
+                    if (operacao != null) {
+
+                        if(!(operacao.equals("VERIFICAR_SALDO"))) {
+
+                            String valor = JOptionPane.showInputDialog(
+                                "Digite o valor para " + operacao + ":"
+                            );
+
+                            if (valor != null)
+                                saida.println(numeroConta + "|" + cpf + "|" + operacao + "|" + valor);
+                            else {
+
+                                JOptionPane.showMessageDialog(
+                                        null,
+                                        "Operação cancelada",
+                                        "Erro",
+                                        JOptionPane.ERROR_MESSAGE
+                                );
+
+                            }
+
+                        } else
+                           saida.println(numeroConta + "|" + cpf + "|" + operacao + "|" + "0");
+
+                    } else {
 
                         JOptionPane.showMessageDialog(
                                 null,
@@ -145,8 +156,26 @@ public class Usuario extends Thread {
 
                     }
 
-                } else
-                    saida.println(operacao + "|" + "0");
+                    int acao = JOptionPane.showOptionDialog(
+                            null, 
+                            "Deseja continuar a realizar operações?", 
+                            "Continuar?", 
+                            JOptionPane.DEFAULT_OPTION, 
+                            JOptionPane.QUESTION_MESSAGE, 
+                            null, 
+                            new String[] {
+                                "CONTINUAR",
+                                "SAIR"
+                            },
+                            "CONTINUAR"
+                    );
+
+                    if (acao != 0) {
+                        saida.println("SAIR");
+                        sair = true;
+                    }
+
+                }
 
             } else {
 
@@ -158,26 +187,16 @@ public class Usuario extends Thread {
                 );
 
             }
+            
+        } else {
 
-            int acao = JOptionPane.showOptionDialog(
-                    null, 
-                    "Deseja continuar a realizar operações?", 
-                    "Continuar?", 
-                    JOptionPane.DEFAULT_OPTION, 
-                    JOptionPane.QUESTION_MESSAGE, 
-                    null, 
-                    new String[] {
-                        "CONTINUAR",
-                        "SAIR"
-                    },
-                    "CONTINUAR"
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Operação cancelada",
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
             );
-
-            if (acao != 0) {
-                saida.println("SAIR");
-                sair = true;
-            }
-
+            
         }
         
     }
@@ -197,7 +216,8 @@ public class Usuario extends Thread {
                     null,
                     new String[] {
                         "CONTA",
-                        "AGENCIA"
+                        "AGENCIA",
+                        "CORRENTISTA"
                     },
                     "CONTA"
             );
@@ -277,24 +297,40 @@ public class Usuario extends Thread {
                                         "Digite o número da agência:"
                                 );
                                 
-                                String numeroConta = JOptionPane.showInputDialog(
-                                        "Digite o número da conta:"
-                                );
-                                
-                                String cpf = JOptionPane.showInputDialog(
-                                        "Digite o CPF do cliente:"
-                                );
-                                
-                                if (numero != null || numeroConta != null || cpf != null)
-                                    saida.println(opcao + "|" + acao + "|" + numero + "|" + numeroConta + "|" + cpf);
-                                else {
+                                if (numero != null) {
                                     
-                                    JOptionPane.showMessageDialog(
-                                            null,
-                                            "Operação cancelada",
-                                            "Erro",
-                                            JOptionPane.ERROR_MESSAGE
+                                    String numeroConta = JOptionPane.showInputDialog(
+                                            "Digite o número da conta:"
                                     );
+                                    
+                                    if (numeroConta != null) {
+                                        
+                                        String cpf = JOptionPane.showInputDialog(
+                                                "Digite o CPF do cliente:"
+                                        );
+                                        
+                                        if (cpf != null) {
+                                            
+                                            String nome = JOptionPane.showInputDialog(
+                                                    "Digite o nome do cliente:"
+                                            );
+
+                                            if (nome != null)
+                                                saida.println(opcao + "|" + acao + "|" + numero + "|" + numeroConta + "|" + cpf + "|" + nome);
+                                            else {
+
+                                                JOptionPane.showMessageDialog(
+                                                        null,
+                                                        "Operação cancelada",
+                                                        "Erro",
+                                                        JOptionPane.ERROR_MESSAGE
+                                                );
+
+                                            }
+                                            
+                                        }
+
+                                    }
                                     
                                 }
                                 
@@ -302,7 +338,7 @@ public class Usuario extends Thread {
                             
                             break;
                             
-                        default:
+                        case "ALTERAR":
                             
                             numero = JOptionPane.showInputDialog(
                                     "Digite o número da " + opcao + ":"
@@ -322,8 +358,7 @@ public class Usuario extends Thread {
 
                                     opcoesAtributo = new String[]{
                                         "AGENCIA",
-                                        "NUMERO",
-                                        "CLIENTE"
+                                        "NUMERO"
                                     };
 
                                 }
@@ -380,6 +415,7 @@ public class Usuario extends Thread {
                             }
                             
                             break;
+                            
                     }
                     
                 }

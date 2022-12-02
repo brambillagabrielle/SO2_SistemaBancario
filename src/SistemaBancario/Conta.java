@@ -8,7 +8,7 @@ public class Conta {
     private Agencia agencia;
     private String numero;
     private Cliente cliente;
-    private List<Cliente> correntistas;
+    private List<String> correntistas = new ArrayList<>();
     private Double saldo;
 
     public Conta(Agencia agencia, String numero, Cliente cliente) {
@@ -17,8 +17,7 @@ public class Conta {
         this.numero = numero;
         this.cliente = cliente;
         
-        correntistas = new ArrayList<>(3);
-        correntistas.add(cliente);
+        correntistas.add(cliente.getCpf());
         
         saldo = 0.0;
         
@@ -48,32 +47,32 @@ public class Conta {
         this.cliente = cliente;
     }
 
-    public List<Cliente> getCorrentistas() {
+    public List<String> getCorrentistas() {
         return correntistas;
     }
 
-    public void setCorrentistas(List<Cliente> correntistas) {
+    public void setCorrentistas(List<String> correntistas) {
         this.correntistas = correntistas;
     }
     
-    public void adicionaCorrentista(Cliente cliente) {
-        correntistas.add(cliente);
+    public void adicionaCorrentista(String cpf) {
+        correntistas.add(cpf);
     }
     
     public void removeCorrentista(Cliente cliente) {
         correntistas.remove(cliente);
     }
     
-    public Cliente retornaCorrentista(String cpf) {
+    public boolean verificaCorrentista(String cpf) {
         
-        for(Cliente c : correntistas) {
+        for(String c : correntistas) {
             
-            if (c.getCpf().equals(cpf))
-                return c;
+            if (c.equals(cpf))
+                return true;
             
         }
         
-        return null;
+        return false;
         
     }
 
@@ -96,6 +95,17 @@ public class Conta {
         
         saldo -= valor;
         return true;
+        
+    }
+    
+    public String listaCorrentistas() {
+        
+        String listaCorrentistas = "";
+        
+        for (String c : correntistas)
+            listaCorrentistas += c + " ; ";
+        
+        return listaCorrentistas;
         
     }
     

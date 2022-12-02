@@ -7,13 +7,16 @@ public class Agencia {
     
     private String numero;
     private String descricao;
-    private List<Conta> contas;
+    private List<Conta> contas = new ArrayList<>();
+    
+    public Agencia() {
+        
+    }
 
     public Agencia(String numero, String descricao) {
         
         this.numero = numero;
         this.descricao = descricao;
-        contas = new ArrayList<>();
         
     }
 
